@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com">
+</head>
+<body>
+    <div class="back"><a href="index.html">&lt;&lt; &nbsp;Back!</a></div>
+    <div class="login-container">
+        <h1>Login to Secure File Transfer</h1>
+
+        <!-- Traditional Login Form -->
+        <div class="loginform">
+            <form id="login-form" onsubmit="loginUser(event)">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+
+        <!-- Google Sign-In -->
+        <div class="google-signin">
+            <p>Or sign in with Google</p>
+            <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        </div>
+    </div>
+    <div class="newregis">
+        <a href="register.html" >Create new Account?</a>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
