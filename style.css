@@ -541,3 +541,127 @@ h2, h3 {
 .loginform{
     width: 100%;
 }
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 10%;
+    background-color: #fff;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 400;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #ff6600;
+}
+
+.cta-btn {
+    background-color: #ff6600;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: -15px;
+    transition: background-color 0.3s ease;
+}
+
+.cta-btn:hover {
+    background-color: #cc5200;
+}
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 50px 10%;
+    background-color: #f9f9f9;
+}
+
+.hero-text {
+    max-width: 50%;
+}
+
+.hero-text h1 {
+    font-size: 3rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.hero-text p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.cta-main-btn {
+    background-color: #ff6600;
+    color: #fff;
+    padding: 12px 25px;
+    text-decoration: none;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease;
+}
+
+.cta-main-btn:hover {
+    background-color: #cc5200;
+}
+
+.hero-image img {
+    border-radius: 20px;
+    max-width: 100%;
+    height: auto;
+}
+
+.features {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    padding: 50px 10%;
+    background-color: #fff;
+}
+
+.feature {
+    max-width: 30%;
+}
+
+.feature h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.feature p {
+    font-size: 1rem;
+    color: #666;
+}
