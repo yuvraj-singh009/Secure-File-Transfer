@@ -120,3 +120,56 @@ function updateProfile(event) {
         document.getElementById('username').textContent = newName;
     }
 }
+function handleCredentialResponse(response) {
+    const userObject = jwt_decode(response.credential);
+    console.log(userObject);
+  
+    document.getElementById("user-name").textContent = `Name: ${userObject.name}`;
+    document.getElementById("user-photo").src = userObject.picture;
+    document.getElementById("user-info").classList.remove("hidden");
+  }
+  
+  // Load the Google Sign-In button.
+  window.onload = function () {
+    google.accounts.id.initialize({
+      client_id: "52604179963-bvd5aba8vpha3m8n6o5e3uuq9atf7brd.apps.googleusercontent.com",
+      callback: handleCredentialResponse,
+    });
+    google.accounts.id.renderButton(
+      document.querySelector(".g_id_signin"),
+      { theme: "outline", size: "large" } // Customization
+    );
+    google.accounts.id.prompt(); // Optional auto-prompt.
+  };
+
+  function handleCredentialResponse(response) {
+    // Decode the token using jwt-decode
+    const userObject = jwt_decode(response.credential);
+
+    // Extract the email from the decoded token
+    const email = userObject.email;
+
+    // Redirect to register.html with the email as a query parameter
+    window.location.href = `register.html?email=${encodeURIComponent(email)}`;
+}
+  
+
+  // Retrieve query parameters from the URL
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get('email'); // Get the 'email' parameter
+
+  // Populate the username field if the email exists
+  if (email) {
+      document.getElementById('register-username').value = email;
+  }
+
+  function registerUser(event) {
+      event.preventDefault();
+
+      // Handle registration logic
+      const username = document.getElementById('register-username').value;
+      const password = document.getElementById('register-password').value;
+
+      console.log('Registering user:', username, password);
+      alert('Registration successful!');
+  }
