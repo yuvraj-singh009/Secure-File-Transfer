@@ -1,5 +1,6 @@
  // Import the Supabase library
  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+ import bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs/+esm';
 
  // Initialize Supabase client
  const SUPABASE_URL = 'https://afieewyossvtxetxytnr.supabase.co'; // Replace with your Supabase URL
@@ -14,10 +15,14 @@
      const username = document.getElementById('username').value;
      const password = document.getElementById('password').value;
 
+       // Hash the password
+       const hashedPassword = bcrypt.hashSync(password, 10);
+
+
      try {
          // Insert data into Supabase table
          const { data, error } = await supabase.from('users').insert([
-             { username: username, password: password } // Replace 'users' with your table name
+             { username: username, password: hashedPassword } // Replace 'users' with your table name
          ]);
 
          if (error) {
