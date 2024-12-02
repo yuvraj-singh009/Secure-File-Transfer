@@ -16,18 +16,26 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
         .from('users')
         .select('*')
         .eq('username', username)
-        .eq('password', password)
+        // .eq('password', password)
         .single(); // Assuming there's only one record for each username-password pair
-    // Get the stored hashed password
-    const storedHashedPassword = users[0].password;
+    if (error) {
+        console.error('Error fetching user:', error);
+        document.getElementById('error-message').textContent = 'Invalid username or password.';
+        document.getElementById('error-message').style.display = 'block';
+        return;
+    }
 
-    // Compare entered password with the hashed password
-    const passwordMatch = bcrypt.compareSync(password, storedHashedPassword);
+    // Extract the stored hashed password
+    const storedHashedPassword = data.password;
+
+    // Compare the entered password with the stored hashed password
+    const passwordMatch = await bcrypt.compare(password, storedHashedPassword);
+
     if (passwordMatch) {
-        const usernameBeforeAt = username.split('@')[0];
+        // const usernameBeforeAt = username.split('@')[0];
         // If user is found, redirect to profile.php
         window.location.href = `profile.html?username=${username}`;
-      
+
     } else {
         // If no user is found or there's an error
         document.getElementById('error-message').style.display = 'block';
