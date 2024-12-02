@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
     <link rel="stylesheet" href="profile.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- <script type="text/javascript"></script> -->
     <script src="profile.js" type="module"></script>
 </head>
 <body>
@@ -39,9 +41,11 @@
                 <div class="upload-container">
                     <h1>Upload Your File</h1>
                     <form id="uploadForm" method="post" enctype="multipart/form-data">
-                        <input type="file"  class="file-input" id="file" required>
+                       <input type="file"  class="file-input" id="file" required>
                         <br>
-                        <button type="submit">Upload</button>
+                        To: <input type="email" name="email" class="file-input" id="email" placeholder="email" required>
+                        <br>
+                        <button type="submit" onclick="sendEmail()">Upload</button>
                     </form>
                 </div>
             </div>
@@ -83,6 +87,39 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- <script src="script.js"></script> -->
+
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        // Initialize EmailJS with your User ID
+        (function () {
+            emailjs.init("RwhVK_22140kjAtOx"); // Replace with your EmailJS User ID
+        })();
+
+        function sendEmail() {
+            // const recipient = document.getElementById('recipient').value;
+            const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+
+            const serviceID = "service_oj849wp"; // Replace with your EmailJS Service ID
+            const templateID = "template_vv2q8vi"; // Replace with your EmailJS Template ID
+
+            const templateParams = {
+                email: document.getElementById("email").value,
+                otp: otp, // Dynamic OTP value
+            };
+
+            emailjs.send(serviceID, templateID, templateParams)
+                .then(response => {
+                    alert(`Email sent successfully! Your OTP is: ${otp}`);
+                })
+                .catch(error => {
+                    alert("Failed to send email. Please try again.");
+                    console.error("EmailJS Error:", error);
+                });
+        }
+    </script>
 </body>
 </html>
