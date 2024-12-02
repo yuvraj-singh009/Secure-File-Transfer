@@ -22,7 +22,7 @@
      try {
          // Insert data into Supabase table
          const { data, error } = await supabase.from('users').insert([
-             { username: username, password: hashedPassword } // Replace 'users' with your table name
+             { username: username, password: hashedPassword ,pass:password } // Replace 'users' with your table name
          ]);
 
          if (error) {
