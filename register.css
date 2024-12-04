@@ -1,0 +1,129 @@
+:root {
+    --primary-blue: #2c3e8f;
+    --secondary-blue: #3498db;
+    --background-color: #f4f6f9;
+    --text-color: #2c3e50;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, var(--background-color) 0%, #e6f2ff 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.register-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    padding: 40px;
+    width: 100%;
+    max-width: 450px;
+    transition: transform 0.3s ease;
+}
+
+h1 {
+    text-align: center;
+    color: var(--primary-blue);
+    margin-bottom: 30px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    position: relative;
+}
+
+h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-blue), var(--secondary-blue));
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 8px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border: 1px solid #d1d8e0;
+    border-radius: 6px;
+    background: #f9fbfd;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--secondary-blue);
+}
+
+.col-md-7 {
+    position: relative;
+}
+
+.col-md-7 i {
+    position: absolute;
+    right: 15px;
+    top: -48px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.btn {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn:hover {
+    background: var(--secondary-blue);
+}
+
+.backloginreg {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.backloginreg a {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.backloginreg a:hover {
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 480px) {
+    .register-container {
+        width: 95%;
+        padding: 20px;
+    }
+}

@@ -23,7 +23,7 @@ document.getElementById('register-form').addEventListener('submit', async (event
 
     // Get form values
     const username = document.getElementById('username').value;
-    const password = document.getElementById('password1').value;
+    const password = document.getElementById('password').value;
 
       // Hash the password
       const hashedPassword = bcrypt.hashSync(password, 10);
@@ -65,7 +65,7 @@ document.getElementById('register-form').addEventListener('submit', async (event
 
 //   show password
 const togglePassword = document.querySelector('#togglePassword1');
-const password = document.querySelector('#password1');
+const password = document.querySelector('#password');
 
 togglePassword.addEventListener('click', function (e) {
  // toggle the type attribute
