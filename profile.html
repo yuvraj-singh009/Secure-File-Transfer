@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +6,7 @@
     <title>User Profile</title>
     <link rel="stylesheet" href="profile.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <!-- <script type="text/javascript"></script> -->
-    <script src="profile.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
 </head>
 <body>
     <div class="profile-page">
@@ -16,7 +14,7 @@
         <div class="top-bar">
             <div class="user-info">
                 <img src="default-avatar.png" alt="User Image" class="profile-img">
-                <h2 id="username">username</h2> <!-- Dynamically display username -->
+                <h2 id="username">username</h2>
             </div>
             <button class="edit-btn" onclick="editProfile()">Edit Profile</button>
         </div>
@@ -41,20 +39,20 @@
                 <div class="upload-container">
                     <h1>Upload Your File</h1>
                     <form id="uploadForm" method="post" enctype="multipart/form-data">
-                       <input type="file"  class="file-input" id="file" required>
+                       <input type="file" class="file-input" id="file" required>
                         <br>
                         To: <input type="email" name="email" class="file-input" id="email" placeholder="email" required>
                         <br>
-                        <button type="submit" onclick="sendEmail()">Upload</button>
+                        <button type="submit">Upload</button>
                     </form>
                 </div>
             </div>
             <div class="data-column">
-                <h3>Retreive Data</h3>
+                <h3>Retrieve Data</h3>
                 <p>No data received yet.</p>
                 <div class="upload-container">
                     <h1>Upload Your File</h1>
-                    <form id="retrieveForm" method="post" enctype="multipart/form-data">
+                    <form id="retrieveForm">
                         <input type="text" id="retrieveOtp"  class="file-input" placeholder="Enter OTP:" required>
                         <br>
                         <button type="submit">Retrieve</button>
@@ -63,63 +61,136 @@
             </div>
         </div>
         <div class="status">
-                <p id="status"></p>
-            </div>
+            <p id="status"></p>
+        </div>
 
         <!-- Sign Out Button -->
         <button class="sign-out-btn" onclick="window.location.href='login.html'">Sign Out</button>
     </div>
 
-    <!-- Edit Profile Modal -->
-    <div id="edit-profile-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2>Edit Your Profile</h2>
-            <form id="edit-profile-form"  action="updateProfile.php">
-                <label for="edit-name">Name</label>
-                <input type="text" id="edit-name" name="name" value="" required>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-                <label for="edit-email">Email</label>
-                <input type="email" id="edit-email" name="email" value="" required>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://afieewyossvtxetxytnr.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmaWVld3lvc3N2dHhldHh5dG5yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMjgxNTc4MCwiZXhwIjoyMDQ4MzkxNzgwfQ.agrmFADCTLm4n3w8tykxwIjz9K7MuknHk4GfOCTNWLM';
+        const BUCKET_NAME = 'uploads';
 
-                <button type="submit" class="btn" name="submit">Save Changes</button>
-            </form>
-        </div>
-    </div>
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    <!-- <script src="script.js"></script> -->
-
-
-
-
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script type="text/javascript">
-        // Initialize EmailJS with your User ID
-        (function () {
-            emailjs.init("RwhVK_22140kjAtOx"); // Replace with your EmailJS User ID
+        // Initialize EmailJS
+        (function() {
+            emailjs.init("RwhVK_22140kjAtOx");
         })();
 
-        function sendEmail() {
-            // const recipient = document.getElementById('recipient').value;
-            const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+        // Function to generate a consistent 6-digit OTP
+        function generateOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
 
-            const serviceID = "service_oj849wp"; // Replace with your EmailJS Service ID
-            const templateID = "template_vv2q8vi"; // Replace with your EmailJS Template ID
+        // Function to delete a file after 5 minutes
+        async function scheduleDeletion(filePath) {
+            setTimeout(async () => {
+                const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
+                if (error) {
+                    console.error(`Error deleting file ${filePath}:`, error.message);
+                } else {
+                    console.log(`File ${filePath} deleted successfully.`);
+                }
+            }, 5 * 60 * 1000); // 5 minutes in milliseconds
+        }
 
+        // Upload Form Submission
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('file');
+            const emailInput = document.getElementById('email');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                document.getElementById('status').textContent = 'Please select a file.';
+                return;
+            }
+
+            const otp = generateOTP(); // Generate a consistent OTP
+
+            // Prepare EmailJS parameters
+            const serviceID = "service_oj849wp";
+            const templateID = "template_vv2q8vi";
             const templateParams = {
-                email: document.getElementById("email").value,
-                otp: otp, // Dynamic OTP value
+                email: emailInput.value,
+                otp: otp
             };
 
-            emailjs.send(serviceID, templateID, templateParams)
-                .then(response => {
-                    alert(`Email sent successfully! Your OTP is: ${otp}`);
-                })
-                .catch(error => {
-                    alert("Failed to send email. Please try again.");
-                    console.error("EmailJS Error:", error);
-                });
-        }
+            try {
+                // Send email with OTP
+                await emailjs.send(serviceID, templateID, templateParams);
+
+                // Upload file to Supabase
+                const filePath = `otp-files/${otp}-${file.name}`;
+                const { data, error } = await supabase.storage
+                    .from(BUCKET_NAME)
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+
+                if (error) throw error;
+
+                // Schedule file deletion
+                scheduleDeletion(filePath);
+
+                // Update status
+                document.getElementById('status').textContent = `File uploaded successfully. OTP sent to ${emailInput.value}. Your OTP is: ${otp}`;
+
+                // Prefill OTP in retrieve form (optional)
+                document.getElementById('retrieveOtp').value = otp;
+            } catch (error) {
+                document.getElementById('status').textContent = `Error: ${error.message}`;
+                console.error(error);
+            }
+        });
+
+        // Retrieve Form Submission
+        document.getElementById('retrieveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const retrieveOtpInput = document.getElementById('retrieveOtp');
+            const otp = retrieveOtpInput.value;
+
+            if (!otp) {
+                document.getElementById('status').textContent = 'Please enter an OTP to retrieve a file.';
+                return;
+            }
+
+            try {
+                // List all files in the bucket
+                const { data: files, error } = await supabase.storage.from(BUCKET_NAME).list('otp-files');
+
+                if (error) throw error;
+
+                // Find the file matching the OTP
+                const file = files.find((f) => f.name.startsWith(`${otp}-`));
+
+                if (!file) {
+                    document.getElementById('status').textContent = `No file found for OTP: ${otp}`;
+                    return;
+                }
+
+                // Generate a download URL
+                const { data: downloadData, error: downloadError } = await supabase.storage
+                    .from(BUCKET_NAME)
+                    .createSignedUrl(`otp-files/${file.name}`, 60); // URL valid for 60 seconds
+
+                if (downloadError) throw downloadError;
+
+                // Display the download link
+                document.getElementById('status').innerHTML = `
+                    File retrieved successfully. <a href="${downloadData.signedUrl}" target="_blank">Open File</a>
+                `;
+            } catch (error) {
+                document.getElementById('status').textContent = `Error retrieving file: ${error.message}`;
+            }
+        });
     </script>
 </body>
 </html>
