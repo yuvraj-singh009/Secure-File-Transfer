@@ -144,7 +144,7 @@
                 document.getElementById('status').textContent = `File uploaded successfully. OTP sent to ${emailInput.value}. Your OTP is: ${otp}`;
 
                 // Prefill OTP in retrieve form (optional)
-                document.getElementById('retrieveOtp').value = otp;
+                // document.getElementById('retrieveOtp').value = otp;
             } catch (error) {
                 document.getElementById('status').textContent = `Error: ${error.message}`;
                 console.error(error);
