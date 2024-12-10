@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Encryption and Decryption</title>
+    <link rel="stylesheet" href="encryption.css">
+   
+</head>
+<body>
+    <h1>File Encryption and Decryption</h1>
+    <h2>Encrypt a File</h2>
+    <input type="file" id="fileInput" />
+    <button id="encryptButton">Encrypt</button>
+    <h2>Decrypt a File</h2>
+    <input type="file" id="encryptedFileInput" />
+    <input type="password" id="decryptionKey" placeholder="Enter encryption key for decryption" />
+    <button id="decryptButton">Decrypt</button>
+
+    <div class="result" id="result">
+    </div><div class="backbtn">
+
+        <a href="profile.html" class="back-button">Back to Profile</a>
+    </div>
+    <footer>
+        &copy; 2024 Secure File Transfer. All Rights Reserved.
+    </footer>
+
+    <script>
+        async function encryptFile(file) {
+            const password = prompt("Enter a password for encryption:");
+            if (!password) return;
+
+            const key = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+            const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization Vector
+            const algorithm = { name: "AES-GCM", iv: iv };
+            const cryptoKey = await crypto.subtle.importKey("raw", key, algorithm, false, ["encrypt"]);
+
+            const fileBuffer = await file.arrayBuffer();
+            const encryptedData = await crypto.subtle.encrypt(algorithm, cryptoKey, fileBuffer);
+
+            // Combine IV, MIME type, and encrypted data
+            const mimeType = file.type;
+            const mimeBuffer = new TextEncoder().encode(mimeType);
+            const mimeLength = new Uint8Array([mimeBuffer.length]);
+            const combinedData = new Blob([iv, mimeLength, mimeBuffer, encryptedData]);
+
+            const url = URL.createObjectURL(combinedData);
+
+            const result = document.getElementById('result');
+            result.innerHTML = `<a href="${url}" download="encrypted_${file.name}">Download Encrypted File</a>`;
+        }
+
+        async function decryptFile(file, password) {
+            const fileBuffer = await file.arrayBuffer();
+            const iv = fileBuffer.slice(0, 12); // First 12 bytes are the IV
+            const mimeLength = new Uint8Array(fileBuffer.slice(12, 13))[0]; // Length of the MIME type
+            const mimeBuffer = fileBuffer.slice(13, 13 + mimeLength); // MIME type
+            const encryptedData = fileBuffer.slice(13 + mimeLength);
+
+            const mimeType = new TextDecoder().decode(mimeBuffer);
+
+            const key = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+            const algorithm = { name: "AES-GCM", iv: new Uint8Array(iv) };
+            const cryptoKey = await crypto.subtle.importKey("raw", key, algorithm, false, ["decrypt"]);
+
+            try {
+                const decryptedData = await crypto.subtle.decrypt(algorithm, cryptoKey, encryptedData);
+                const blob = new Blob([decryptedData], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+
+                const result = document.getElementById('result');
+                result.innerHTML = `<a href="${url}" download="decrypted_file">Download Decrypted File</a>`;
+            } catch (error) {
+                alert("Decryption failed! Check your password or file.");
+            }
+        }
+
+        document.getElementById('encryptButton').addEventListener('click', () => {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                alert("Please select a file to encrypt.");
+                return;
+            }
+            encryptFile(fileInput.files[0]);
+        });
+
+        document.getElementById('decryptButton').addEventListener('click', () => {
+            const encryptedFileInput = document.getElementById('encryptedFileInput');
+            const password = document.getElementById('decryptionKey').value;
+            if (encryptedFileInput.files.length === 0 || !password) {
+                alert("Please select an encrypted file and enter the decryption key.");
+                return;
+            }
+            decryptFile(encryptedFileInput.files[0], password);
+        });
+    </script>
+</body>
+</html>

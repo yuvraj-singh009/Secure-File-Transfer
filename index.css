@@ -59,7 +59,7 @@ nav .logo {
 }
 
 .cta-btn:hover {
-    background: #ffa726;
+    background: #ffffff;
     transform: scale(1.1);
 }
 
@@ -74,7 +74,7 @@ nav .logo {
 
 .hero-text {
     max-width: 50%;
-    margin-left:50px;
+    margin-left: 50px;
 }
 
 .hero-text h1 {
@@ -231,4 +231,3 @@ nav .logo {
     width: 50%;
 
 }
-

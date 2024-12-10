@@ -154,7 +154,7 @@ button:hover {
 
 /* Sign Out Button */
 .sign-out-btn {
-    margin-left: 88vw;
+    margin-left: 71vw;
     width: 10%;
     padding: 12px 20px;
     background: #ff5a5f;
@@ -186,4 +186,28 @@ button:hover {
     .sign-out-btn {
         font-size: 0.9rem;
     }
+    .encryptbtn {
+        font-size: 0.9rem;
+    }
+}
+
+.encryptbtn{
+    margin-left:2vw;
+    width: 11%;
+    padding: 12px 20px;
+    background: #27a3d4;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+
+
+}
+
+.encryptbtn:hover {
+    background: #2155e3;
+    transform: translateY(-2px);
 }

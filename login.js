@@ -16,12 +16,16 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
         .from('users')
         .select('*')
         .eq('username', username)
-        // .eq('password', password)
-        .single(); // Assuming there's only one record for each username-password pair
+        .single();
+
     if (error) {
         console.error('Error fetching user:', error);
-        document.getElementById('error-message').textContent = 'Invalid username or password.';
-        document.getElementById('error-message').style.display = 'block';
+        // Ensure you have an error-message element in your HTML
+        const errorElement = document.getElementById('error-message');
+        if (errorElement) {
+            errorElement.textContent = 'Invalid username or password.';
+            errorElement.style.display = 'block';
+        }
         return;
     }
 
@@ -32,17 +36,17 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
     const passwordMatch = await bcrypt.compare(password, storedHashedPassword);
 
     if (passwordMatch) {
-        // const usernameBeforeAt = username.split('@')[0];
-        // If user is found, redirect to profile.php
-        window.location.href = `profile.html?username=${username}`;
-
+        // Use strict encoding and full URL
+        const encodedUsername = encodeURIComponent(username);
+        window.location.href = `profile.html?username=${encodedUsername}`;
     } else {
-        // If no user is found or there's an error
-        document.getElementById('error-message').style.display = 'block';
+        // If password doesn't match
+        const errorElement = document.getElementById('error-message');
+        if (errorElement) {
+            errorElement.style.display = 'block';
+        }
     }
 });
-
-
 // Load the Google Sign-In button.
 window.onload = function () {
     google.accounts.id.initialize({
