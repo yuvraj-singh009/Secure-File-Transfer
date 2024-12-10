@@ -350,7 +350,7 @@
 
             try {
                 // List all files in the bucket
-                const { data: files, error } = await supabase.storage.from('saved').list();
+                const { data: files, error } = await supabase.storage.from('saved').list('saved');
 
                 if (error) throw error;
 
