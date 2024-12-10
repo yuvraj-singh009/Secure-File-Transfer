@@ -95,9 +95,6 @@
             emailjs.init("RwhVK_22140kjAtOx");
         })();
 
-        // Encryption Key Management
-        let cryptoKey; 
-
         // Generate an encryption key
         async function generateKey() {
             return await crypto.subtle.generateKey(
@@ -107,50 +104,80 @@
             );
         }
 
-        // Ensure the key is initialized
-        async function initializeKey() {
-            if (!cryptoKey) {
-                cryptoKey = await generateKey();
-            }
+        // Export the key to be able to import it later
+        async function exportKey(key) {
+            return await crypto.subtle.exportKey('raw', key);
         }
 
-        // Encrypt file
+        // Import the key for decryption
+        async function importKey(rawKey) {
+            return await crypto.subtle.importKey(
+                'raw',
+                rawKey,
+                { name: "AES-GCM", length: 256 },
+                true,
+                ["encrypt", "decrypt"]
+            );
+        }
+
+        // Encrypt file with additional metadata
         async function encryptFile(file) {
-            await initializeKey();
+            // Generate a unique key for this specific file
+            const fileKey = await generateKey();
+            const exportedKey = await exportKey(fileKey);
 
             const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization Vector
             const algorithm = { name: "AES-GCM", iv: iv };
 
             const fileBuffer = await file.arrayBuffer();
-            const encryptedData = await crypto.subtle.encrypt(algorithm, cryptoKey, fileBuffer);
+            const encryptedData = await crypto.subtle.encrypt(algorithm, fileKey, fileBuffer);
 
-            // Combine IV, MIME type, and encrypted data
+            // Combine exported key, IV, MIME type, and encrypted data
             const mimeType = file.type;
             const mimeBuffer = new TextEncoder().encode(mimeType);
             const mimeLength = new Uint8Array([mimeBuffer.length]);
-            
-            return new Blob([iv, mimeLength, mimeBuffer, encryptedData]);
+
+            // Create a blob that contains:
+            // 1. Exported key
+            // 2. IV
+            // 3. MIME type length
+            // 4. MIME type
+            // 5. Encrypted data
+            return {
+                encryptedBlob: new Blob([
+                    exportedKey,
+                    iv,
+                    mimeLength,
+                    mimeBuffer,
+                    encryptedData
+                ]),
+                exportedKey: exportedKey
+            };
         }
 
-        // Decrypt file
-        async function decryptFile(file) {
-            await initializeKey();
+        // Decrypt file with metadata
+        async function decryptFile(encryptedFile) {
+            const fileBuffer = await encryptedFile.arrayBuffer();
 
-            const fileBuffer = await file.arrayBuffer();
-            const iv = fileBuffer.slice(0, 12); // First 12 bytes are the IV
-            const mimeLength = new Uint8Array(fileBuffer.slice(12, 13))[0]; // Length of the MIME type
-            const mimeBuffer = fileBuffer.slice(13, 13 + mimeLength); // MIME type
-            const encryptedData = fileBuffer.slice(13 + mimeLength);
+            // Extract key (first 32 bytes for 256-bit key)
+            const exportedKey = fileBuffer.slice(0, 32);
+            const fileKey = await importKey(exportedKey);
+
+            // Extract other components
+            const iv = new Uint8Array(fileBuffer.slice(32, 44)); // Next 12 bytes are IV
+            const mimeLength = new Uint8Array(fileBuffer.slice(44, 45))[0]; // Length of MIME type
+            const mimeBuffer = fileBuffer.slice(45, 45 + mimeLength); // MIME type
+            const encryptedData = fileBuffer.slice(45 + mimeLength);
 
             const mimeType = new TextDecoder().decode(mimeBuffer);
-            const algorithm = { name: "AES-GCM", iv: new Uint8Array(iv) };
+            const algorithm = { name: "AES-GCM", iv: iv };
 
             try {
-                const decryptedData = await crypto.subtle.decrypt(algorithm, cryptoKey, encryptedData);
+                const decryptedData = await crypto.subtle.decrypt(algorithm, fileKey, encryptedData);
                 return new Blob([decryptedData], { type: mimeType });
             } catch (error) {
                 console.error("Decryption failed", error);
-                throw new Error("Decryption failed");
+                throw new Error("Decryption failed. The file may have been corrupted or the key is invalid.");
             }
         }
 
@@ -186,8 +213,8 @@
             const otp = generateOTP(); // Generate a consistent OTP
 
             try {
-                // Encrypt the file first
-                const encryptedFile = await encryptFile(file);
+                // Encrypt the file 
+                const { encryptedBlob, exportedKey } = await encryptFile(file);
 
                 // Prepare EmailJS parameters
                 const serviceID = "service_oj849wp";
@@ -204,7 +231,7 @@
                 const filePath = `otp-files/${otp}-${file.name}.encrypted`;
                 const { data, error } = await supabase.storage
                     .from(BUCKET_NAME)
-                    .upload(filePath, encryptedFile, {
+                    .upload(filePath, encryptedBlob, {
                         cacheControl: '3600',
                         upsert: false
                     });
@@ -271,10 +298,11 @@
 
             } catch (error) {
                 document.getElementById('status').textContent = `Error retrieving file: ${error.message}`;
+                console.error(error);
             }
         });
 
-        // Existing Saved Data Upload and Retrieve logic remains the same...
+        // Saved Data Upload
         document.getElementById('saveform').addEventListener('submit', async (e) => {
             e.preventDefault();
             const savedFileInput = document.getElementById('savedFile');
@@ -308,6 +336,7 @@
             }
         });
 
+        // Retrieve Saved Data
         document.getElementById('retrieveSavedForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -362,14 +391,37 @@
 
             const fullUsername = getUrlParameter('username');
             const displayUsername = fullUsername.split('@')[0];
-            
+
             const usernameElement = document.getElementById('username');
             if (usernameElement && displayUsername) {
                 usernameElement.textContent = displayUsername;
             }
         });
     </script>
-   
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let timeout;
+
+            // Reset the timeout whenever there's user activity
+            const resetTimeout = () => {
+                clearTimeout(timeout); // Clear the existing timeout
+                timeout = setTimeout(() => {
+                    // Redirect to the login page after 5 minutes of inactivity
+                    alert("You have been signed out due to inactivity.");
+                    window.location.href = 'login.html';
+                }, 5 * 60 * 1000); // 5 minutes in milliseconds
+            };
+
+            // Event listeners for user activity
+            ['mousemove', 'click', 'keypress', 'scroll'].forEach((event) => {
+                document.addEventListener(event, resetTimeout);
+            });
+
+            // Initialize the timeout when the page loads
+            resetTimeout();
+        });
+
+    </script>
 </body>
 
 </html>
