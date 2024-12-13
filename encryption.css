@@ -77,7 +77,8 @@
 
         input[type="password"] {
             background: rgba(255, 255, 255, 0.2);
-            color: #ffffff;
+            color: #000000;
+            
         }
 
         button {
