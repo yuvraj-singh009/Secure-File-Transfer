@@ -36,18 +36,18 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
         // Query the Supabase 'users' table for the given username
         const { data, error } = await supabase
             .from('users')
-            .select('*')
+            .select('password')
             .eq('username', username)
             .single();
 
         // Hide loading state
         if (loadingElement) loadingElement.style.display = 'none';
 
-        if (error) {
-            throw new Error('Invalid username or password');
+        if (!data) {
+            // Username not found
+            throw new Error('No username found');
         }
 
-        // Extract the stored hashed password
         const storedHashedPassword = data.password;
 
         // Compare the entered password with the stored hashed password
@@ -58,10 +58,11 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
             const encodedUsername = encodeURIComponent(username);
             window.location.href = `profile.html?username=${encodedUsername}`;
         } else {
-            throw new Error('Invalid username or password');
+            // Password incorrect
+            throw new Error('Incorrect password');
         }
     } catch (err) {
-        // Show error message
+        // Show specific error messages
         if (errorElement) {
             errorElement.textContent = err.message;
             errorElement.style.display = 'block';
@@ -104,7 +105,6 @@ function handleCredentialResponse(response) {
         alert("Access denied! Please sign in using an email ending with '@vitbhopal.ac.in'.");
     }
 }
-
 
 // Password toggle functionality
 const togglePassword = document.querySelector('#togglePassword');
