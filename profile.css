@@ -211,3 +211,25 @@ button:hover {
     background: #2155e3;
     transform: translateY(-2px);
 }
+.notification-box {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.notification {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+}
+
+.notification:last-child {
+    border-bottom: none;
+}
+
+.notification small {
+    display: block;
+    color: #666;
+    font-size: 0.8em;
+}

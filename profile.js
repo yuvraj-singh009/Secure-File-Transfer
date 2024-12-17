@@ -187,15 +187,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// Email Validation Function
+function validateVITEmail(email) {
+    const regex = /^[a-zA-Z0-9._%+-]+@vitbhopal\.ac\.in$/;
+    return regex.test(email);
+}
+
 // Upload Form Submission
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fileInput = document.getElementById('file');
     const emailInput = document.getElementById('email');
     const file = fileInput.files[0];
+    const email = emailInput.value;
 
     if (!file || !rsaKeyPair) {
         document.getElementById('status').textContent = 'Please select a file and ensure keys are generated.';
+        return;
+    }
+
+    // Validate email
+    if (!validateVITEmail(email)) {
+        document.getElementById('status').textContent = 'Invalid email. Only VIT Bhopal emails are allowed.';
         return;
     }
 
@@ -209,7 +222,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         const serviceID = "service_oj849wp";
         const templateID = "template_vv2q8vi";
         const templateParams = {
-            email: emailInput.value,
+            email: email,
             otp: otp
         };
 
@@ -228,7 +241,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         if (error) throw error;
 
         // Update status
-        document.getElementById('status').textContent = `Encrypted file uploaded successfully. OTP sent to ${emailInput.value}. Your OTP is: ${otp}`;
+        document.getElementById('status').textContent = `Encrypted file uploaded successfully. OTP sent to ${email}. Your OTP is: ${otp}`;
 
     } catch (error) {
         document.getElementById('status').textContent = `Error: ${error.message}`;
@@ -291,6 +304,7 @@ document.getElementById('retrieveForm').addEventListener('submit', async (e) => 
         console.error(error);
     }
 });
+
 
 // Saved Data Upload
 document.getElementById('saveform').addEventListener('submit', async (e) => {
