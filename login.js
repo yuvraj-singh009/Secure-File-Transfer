@@ -94,8 +94,17 @@ window.onload = function () {
 function handleCredentialResponse(response) {
     const userObject = jwt_decode(response.credential);
     const email = userObject.email;
-    window.location.href = `register.html?email=${encodeURIComponent(email)}`;
+
+    // Check if the email ends with @vitbhopal.ac.in
+    if (email.endsWith("@vitbhopal.ac.in")) {
+        // Redirect to registration page with email as a parameter
+        window.location.href = `register.html?email=${encodeURIComponent(email)}`;
+    } else {
+        // Display an error message and refuse access
+        alert("Access denied! Please sign in using an email ending with '@vitbhopal.ac.in'.");
+    }
 }
+
 
 // Password toggle functionality
 const togglePassword = document.querySelector('#togglePassword');
