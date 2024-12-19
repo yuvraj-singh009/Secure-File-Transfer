@@ -177,20 +177,67 @@ class EnhancedEncryption {
 // Global variable to store RSA key pair
 let rsaKeyPair = null;
 
-// Initialize RSA Key Pair on page load
+// Function to convert key to string
+async function exportKeyToString(key, isPublic) {
+    const exported = await crypto.subtle.exportKey(
+        isPublic ? 'spki' : 'pkcs8',
+        key
+    );
+    return btoa(String.fromCharCode(...new Uint8Array(exported)));
+}
+
+// Function to import key from string
+async function importKeyFromString(keyStr, isPublic) {
+    const keyData = Uint8Array.from(atob(keyStr), c => c.charCodeAt(0));
+    return await crypto.subtle.importKey(
+        isPublic ? 'spki' : 'pkcs8',
+        keyData,
+        {
+            name: "RSA-OAEP",
+            hash: "SHA-256"
+        },
+        true,
+        [isPublic ? "encrypt" : "decrypt"]
+    );
+}
+
+// Initialize or retrieve RSA Key Pair on page load
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        rsaKeyPair = await EnhancedEncryption.generateRSAKeyPair();
-        console.log("RSA Key Pair Generated Successfully");
+        // Check if keys exist in sessionStorage
+        const storedPublicKey = sessionStorage.getItem('publicKey');
+        const storedPrivateKey = sessionStorage.getItem('privateKey');
+
+        if (storedPublicKey && storedPrivateKey) {
+            // Reconstruct key pair from stored keys
+            rsaKeyPair = {
+                publicKey: await importKeyFromString(storedPublicKey, true),
+                privateKey: await importKeyFromString(storedPrivateKey, false)
+            };
+            console.log("RSA Key Pair Restored Successfully");
+        } else {
+            // Generate new key pair
+            rsaKeyPair = await EnhancedEncryption.generateRSAKeyPair();
+            
+            // Store keys in sessionStorage
+            sessionStorage.setItem('publicKey', await exportKeyToString(rsaKeyPair.publicKey, true));
+            sessionStorage.setItem('privateKey', await exportKeyToString(rsaKeyPair.privateKey, false));
+            
+            console.log("New RSA Key Pair Generated Successfully");
+        }
     } catch (error) {
-        console.error("Failed to generate RSA Key Pair", error);
+        console.error("Failed to initialize RSA Key Pair", error);
     }
 });
-
 // Email Validation Function
 function validateVITEmail(email) {
     const regex = /^[a-zA-Z0-9._%+-]+@vitbhopal\.ac\.in$/;
     return regex.test(email);
+}
+
+// Helper function to generate OTP
+function generateOTP() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 // Upload Form Submission
@@ -201,8 +248,8 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     const file = fileInput.files[0];
     const email = emailInput.value;
 
-    if (!file || !rsaKeyPair) {
-        document.getElementById('status').textContent = 'Please select a file and ensure keys are generated.';
+    if (!file) {
+        document.getElementById('status').textContent = 'Please select a file.';
         return;
     }
 
@@ -212,9 +259,12 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         return;
     }
 
-    const otp = generateOTP(); // Generate a consistent OTP
+    const otp = generateOTP();
 
     try {
+        // Generate RSA Key Pair when the file is uploaded
+        const rsaKeyPair = await EnhancedEncryption.generateRSAKeyPair();
+
         // Encrypt the file with the generated public key
         const { encryptedBlob } = await EnhancedEncryption.encryptFile(file, rsaKeyPair.publicKey);
 
@@ -240,6 +290,22 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
 
         if (error) throw error;
 
+        // Save public and private keys alongside the encrypted file
+        const keysPath = `otp-files/${otp}-${file.name}.keys`;
+        const keysData = JSON.stringify({
+            publicKey: await exportKeyToString(rsaKeyPair.publicKey, true),
+            privateKey: await exportKeyToString(rsaKeyPair.privateKey, false)
+        });
+
+        const { data: keysDataResponse, error: keysError } = await supabase.storage
+            .from(BUCKET_NAME)
+            .upload(keysPath, new Blob([keysData]), {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (keysError) throw keysError;
+
         // Update status
         document.getElementById('status').textContent = `Encrypted file uploaded successfully. OTP sent to ${email}. Your OTP is: ${otp}`;
 
@@ -248,15 +314,14 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         console.error(error);
     }
 });
-
 // Retrieve Form Submission
 document.getElementById('retrieveForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const retrieveOtpInput = document.getElementById('retrieveOtp');
     const otp = retrieveOtpInput.value;
 
-    if (!otp || !rsaKeyPair) {
-        document.getElementById('status').textContent = 'Please enter an OTP and ensure keys are generated.';
+    if (!otp) {
+        document.getElementById('status').textContent = 'Please enter an OTP.';
         return;
     }
 
@@ -264,46 +329,90 @@ document.getElementById('retrieveForm').addEventListener('submit', async (e) => 
         // List all files in the bucket
         const { data: files, error } = await supabase.storage.from(BUCKET_NAME).list('otp-files');
 
-        if (error) throw error;
+        if (error) {
+            throw new Error(`Error listing files: ${error.message || JSON.stringify(error)}`);
+        }
 
-        // Find the file matching the OTP
+        // Find the encrypted file matching the OTP
         const file = files.find((f) => f.name.startsWith(`${otp}-`) && f.name.endsWith('.encrypted'));
 
         if (!file) {
-            document.getElementById('status').textContent = `No file found for OTP: ${otp}`;
+            document.getElementById('status').textContent = `No encrypted file found for OTP: ${otp}`;
             return;
         }
 
-        // Generate a download URL
-        const { data: downloadData, error: downloadError } = await supabase.storage
+        // Fetch the encrypted file
+        const { data: encryptedData, error: fileError } = await supabase.storage
             .from(BUCKET_NAME)
-            .createSignedUrl(`otp-files/${file.name}`, 60); // URL valid for 60 seconds
+            .download(`otp-files/${file.name}`);
+        
+        if (fileError) {
+            throw new Error(`Error fetching encrypted file: ${fileError.message || JSON.stringify(fileError)}`);
+        }
 
-        if (downloadError) throw downloadError;
+        const encryptedBlob = encryptedData;
 
-        // Fetch the file
-        const response = await fetch(downloadData.signedUrl);
-        const encryptedBlob = await response.blob();
+        // Fetch the RSA keys (public/private) for the file based on OTP
+        const keysPath = `otp-files/${file.name.replace('.encrypted', '')}.keys`;
+        console.log(`Attempting to fetch RSA keys from path: ${keysPath}`); // Log the path
 
-        // Decrypt the file with the RSA private key
-        const decryptedBlob = await EnhancedEncryption.decryptFile(encryptedBlob, rsaKeyPair.privateKey);
+        const { data: keysDataResponse, error: keysError } = await supabase.storage
+            .from(BUCKET_NAME)
+            .download(keysPath);
 
-        // Create a download link for the decrypted file
-        const url = URL.createObjectURL(decryptedBlob);
-        document.getElementById('status').innerHTML = `
-            File retrieved and decrypted successfully. 
-            <a href="${url}" target="_blank" download="${file.name.replace('.encrypted', '')}">Download Decrypted File</a>
-        `;
+        // Check if the keys file exists
+        if (keysError) {
+            console.error(`Error fetching RSA keys: ${keysError.message || JSON.stringify(keysError)}`);
+            document.getElementById('status').textContent = `Error fetching RSA keys: ${keysError.message || 'Unknown error'}`;
+            return;
+        }
 
-        // Schedule deletion of the file after retrieval
-        const filePath = `otp-files/${file.name}`;
-        scheduleDeletion(filePath);
+        // Check if keys data is received
+        if (!keysDataResponse) {
+            console.error('No keys data returned.');
+            document.getElementById('status').textContent = 'No keys data returned.';
+            return;
+        }
+
+        // Log the keys data response to see its contents
+        console.log('RSA Keys Response:', keysDataResponse);
+
+        const keysData = await keysDataResponse.text();
+        console.log('Keys Data:', keysData); // Log keys data for debugging
+
+        const { publicKey, privateKey } = JSON.parse(keysData);
+
+        // Import the RSA keys from the stored strings
+        const rsaKeyPair = {
+            publicKey: await importKeyFromString(publicKey, true),
+            privateKey: await importKeyFromString(privateKey, false)
+        };
+
+        // Decrypt the file with the private key
+        try {
+            const decryptedBlob = await EnhancedEncryption.decryptFile(encryptedBlob, rsaKeyPair.privateKey);
+
+            // Create a download link for the decrypted file
+            const url = URL.createObjectURL(decryptedBlob);
+            document.getElementById('status').innerHTML = `
+                File retrieved and decrypted successfully. 
+                <a href="${url}" target="_blank" download="${file.name.replace('.encrypted', '')}">Download Decrypted File</a>
+            `;
+
+            // Clean up the URL after download
+            setTimeout(() => URL.revokeObjectURL(url), 60000); // Clean up after 1 minute
+
+        } catch (decryptError) {
+            document.getElementById('status').textContent = 'Failed to decrypt file. Please refresh the page and try again.';
+            console.error('Decryption error:', decryptError);
+        }
 
     } catch (error) {
-        document.getElementById('status').textContent = `Error retrieving file: ${error.message}`;
-        console.error(error);
+        document.getElementById('status').textContent = `Error retrieving file: ${error.message || error}`;
+        console.error('Error:', error);
     }
 });
+
 
 
 // Saved Data Upload
@@ -311,8 +420,9 @@ document.getElementById('saveform').addEventListener('submit', async (e) => {
     e.preventDefault();
     const savedFileInput = document.getElementById('savedFile');
     const savedFile = savedFileInput.files[0];
+    const username = document.getElementById('username').textContent.trim(); // Get username from the div
 
-    if (!savedFile || !rsaKeyPair) {
+    if (!savedFile ) {
         document.getElementById('status').textContent = 'Please select a file and ensure keys are generated.';
         return;
     }
@@ -324,7 +434,7 @@ document.getElementById('saveform').addEventListener('submit', async (e) => {
         const { encryptedBlob } = await EnhancedEncryption.encryptFile(savedFile, rsaKeyPair.publicKey);
 
         // Upload encrypted file to Supabase (Saved Data bucket)
-        const savedFilePath = `saved/${Otp}-${savedFile.name}.encrypted`;
+        const savedFilePath = `${username}/${Otp}-${savedFile.name}.encrypted`;
         const { data, error } = await supabase.storage
             .from('saved')
             .upload(savedFilePath, encryptedBlob, {
@@ -349,15 +459,16 @@ document.getElementById('retrieveSavedForm').addEventListener('submit', async (e
 
     const retrieveSavedOtpInput = document.getElementById('retrieveSavedOtp');
     const Otp = retrieveSavedOtpInput.value;
+    const username = document.getElementById('username').textContent.trim(); // Get username from the div
 
-    if (!Otp || !rsaKeyPair) {
+    if (!Otp) {
         document.getElementById('status').textContent = 'Please enter an OTP and ensure keys are generated.';
         return;
     }
 
     try {
         // List all files in the bucket
-        const { data: files, error } = await supabase.storage.from('saved').list('saved');
+        const { data: files, error } = await supabase.storage.from('saved').list(username);
 
         if (error) throw error;
 
@@ -369,65 +480,41 @@ document.getElementById('retrieveSavedForm').addEventListener('submit', async (e
             return;
         }
 
-        // Generate a download URL
-        const { data: downloadData, error: downloadError } = await supabase.storage
-            .from('saved')
-            .createSignedUrl(`saved/${file.name}`, 60); // URL valid for 60 seconds
-
+         // Generate a download URL for the file in the username folder
+         const filePath = `${username}/${file.name}`;
+         const { data: downloadData, error: downloadError } = await supabase.storage
+             .from('saved')
+             .createSignedUrl(filePath, 60);
         if (downloadError) throw downloadError;
 
         // Fetch the file
         const response = await fetch(downloadData.signedUrl);
         const encryptedBlob = await response.blob();
 
-        // Decrypt the file with the RSA private key
-        const decryptedBlob = await EnhancedEncryption.decryptFile(encryptedBlob, rsaKeyPair.privateKey);
+        try {
+            // Decrypt the file with the RSA private key
+            const decryptedBlob = await EnhancedEncryption.decryptFile(encryptedBlob, rsaKeyPair.privateKey);
 
-        // Display the download link
-        const url = URL.createObjectURL(decryptedBlob);
-        document.getElementById('status').innerHTML = `
-            File retrieved and decrypted successfully.
-            <a href="${url}" target="_blank" download="${file.name.replace('.encrypted', '')}">Download Decrypted File</a>
-        `;
+            // Create a download link for the decrypted file
+            const url = URL.createObjectURL(decryptedBlob);
+            document.getElementById('status').innerHTML = `
+                File retrieved and decrypted successfully.
+                <a href="${url}" target="_blank" download="${file.name.replace('.encrypted', '')}">Download Decrypted File</a>
+            `;
 
-        // Schedule deletion of the file after retrieval
-        const filePath = `saved/${file.name}`;
-        // scheduleDeletionFromSavedBucket(filePath);
+            // Clean up the URL after download
+            setTimeout(() => URL.revokeObjectURL(url), 60000); // Clean up after 1 minute
+
+        } catch (decryptError) {
+            document.getElementById('status').textContent = 'Failed to decrypt file. Please refresh the page and try again.';
+            console.error('Decryption error:', decryptError);
+        }
 
     } catch (error) {
         document.getElementById('status').textContent = `Error retrieving file: ${error.message}`;
         console.error(error);
     }
 });
-
-// Helper function to generate OTP
-function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Function to delete a file after 5 minutes
-async function scheduleDeletion(filePath) {
-    setTimeout(async () => {
-        const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
-        if (error) {
-            console.error(`Error deleting file ${filePath}:`, error.message);
-        } else {
-            console.log(`File ${filePath} deleted successfully.`);
-        }
-    }, 5 * 60 * 1000); // 5 minutes in milliseconds
-}
-
-// Function to delete a file from saved bucket after 5 minutes
-async function scheduleDeletionFromSavedBucket(filePath) {
-    setTimeout(async () => {
-        const { error } = await supabase.storage.from('saved').remove([filePath]);
-        if (error) {
-            console.error(`Error deleting file ${filePath}:`, error.message);
-        } else {
-            console.log(`File ${filePath} deleted successfully.`);
-        }
-    }, 5 * 60 * 1000); // 5 minutes in milliseconds
-}
 
 // Username display logic
 document.addEventListener('DOMContentLoaded', () => {
@@ -451,10 +538,24 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     let timeout;
 
+    // Function to save the current keys before session expires
+    const saveKeysBeforeExpiry = () => {
+        if (rsaKeyPair) {
+            try {
+                localStorage.setItem('lastSessionPublicKey', sessionStorage.getItem('publicKey'));
+                localStorage.setItem('lastSessionPrivateKey', sessionStorage.getItem('privateKey'));
+            } catch (error) {
+                console.error('Failed to save keys before session expiry:', error);
+            }
+        }
+    };
+
     // Reset the timeout whenever there's user activity
     const resetTimeout = () => {
         clearTimeout(timeout); // Clear the existing timeout
         timeout = setTimeout(() => {
+            // Save keys before redirecting
+            saveKeysBeforeExpiry();
             // Redirect to the login page after 5 minutes of inactivity
             alert("You have been signed out due to inactivity.");
             window.location.href = 'login.html';
@@ -468,4 +569,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize the timeout when the page loads
     resetTimeout();
+
+    // Add event listener for page unload to save keys
+    window.addEventListener('beforeunload', saveKeysBeforeExpiry);
+});
+
+// Function to restore keys from previous session if needed
+async function restoreKeysFromPreviousSession() {
+    try {
+        const lastSessionPublicKey = localStorage.getItem('lastSessionPublicKey');
+        const lastSessionPrivateKey = localStorage.getItem('lastSessionPrivateKey');
+
+        if (lastSessionPublicKey && lastSessionPrivateKey) {
+            // Restore keys to current session
+            sessionStorage.setItem('publicKey', lastSessionPublicKey);
+            sessionStorage.setItem('privateKey', lastSessionPrivateKey);
+
+            // Clear the localStorage after restoration
+            localStorage.removeItem('lastSessionPublicKey');
+            localStorage.removeItem('lastSessionPrivateKey');
+
+            return true;
+        }
+    } catch (error) {
+        console.error('Failed to restore keys from previous session:', error);
+    }
+    return false;
+}
+
+// Add this to your initial DOMContentLoaded event
+document.addEventListener('DOMContentLoaded', async () => {
+    // Try to restore keys from previous session first
+    const keysRestored = await restoreKeysFromPreviousSession();
+    
+    if (!keysRestored) {
+        // If no keys were restored, proceed with normal key initialization
+        try {
+            // Your existing key initialization code...
+        } catch (error) {
+            console.error("Failed to initialize RSA Key Pair", error);
+        }
+    }
 });

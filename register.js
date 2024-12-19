@@ -25,37 +25,48 @@ document.getElementById('register-form').addEventListener('submit', async (event
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-      // Hash the password
-      const hashedPassword = bcrypt.hashSync(password, 10);
+    // Hash the password
+    const hashedPassword = bcrypt.hashSync(password, 10);
 
-      //Check for existing user...........
-      try{
-       const { data: existingUser, error: userError } = await supabase
-       .from('users')
-       .select('*')
-       .eq('username', username)
-       .single();
+    try {
+        // Check for existing user
+        const { data: existingUser, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', username)
+            .single();
 
-       if (existingUser) {
-       alert('Email is already registered!');
-       return;
-       }
+        if (existingUser) {
+            if (existingUser.password === null) {
+                // If password is null, update the password with the new password entered by the user
+                const { data, error } = await supabase
+                    .from('users')
+                    .update({ password: hashedPassword }) // Update the password with the hashed password
+                    .eq('username', username);
 
-
-
-    
-       
-        // Insert data into Supabase table
-        const { data, error } = await supabase.from('users').insert([
-            { username: username, password: hashedPassword ,pass:password} // Replace 'users' with your table name
-        ]);
-
-        if (error) {
-            console.error('Error inserting data:', error.message);
-            alert('Failed to register user!');
+                if (error) {
+                    console.error('Error updating password:', error.message);
+                    alert('Failed to update password!');
+                } else {
+                    console.log('Password updated successfully:', data);
+                    alert('Password updated successfully!');
+                }
+            } else {
+                alert('Email is already registered and has a password!');
+            }
         } else {
-            console.log('User registered:', data);
-            alert('User registered successfully!');
+            // If no existing user, insert new user into the table
+            const { data, error } = await supabase.from('users').insert([
+                { username: username, password: hashedPassword, pass: password } // Replace 'users' with your table name
+            ]);
+
+            if (error) {
+                console.error('Error inserting data:', error.message);
+                alert('Failed to register user!');
+            } else {
+                console.log('User registered:', data);
+                alert('User registered successfully!');
+            }
         }
     } catch (err) {
         console.error('Unexpected error:', err);
@@ -63,14 +74,14 @@ document.getElementById('register-form').addEventListener('submit', async (event
     }
 });
 
-//   show password
+// Show password functionality
 const togglePassword = document.querySelector('#togglePassword1');
 const password = document.querySelector('#password');
 
 togglePassword.addEventListener('click', function (e) {
- // toggle the type attribute
- const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
- password.setAttribute('type', type);
- // toggle the eye slash icon
- this.classList.toggle('fa-eye-slash');
+    // Toggle the type attribute
+    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+    password.setAttribute('type', type);
+    // Toggle the eye slash icon
+    this.classList.toggle('fa-eye-slash');
 });

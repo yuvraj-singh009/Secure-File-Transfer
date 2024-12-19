@@ -145,3 +145,237 @@ body {
         transform: translateY(0);
     }
 }
+
+/* Forgot Password Link */
+.forgot-password {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.forgot-password a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 30%;
+    text-align: center;
+    border-radius: 8px;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+}
+
+.modal-content input {
+    width: 80%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.modal-content button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal-content button:hover {
+    background-color: #0056b3;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+/* Modal container */
+#forgot-password-modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+    padding-top: 50px;
+    transition: all 0.3s ease;
+}
+
+/* Modal content */
+#forgot-password-modal .modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 400px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+/* Modal close button */
+#forgot-password-modal .close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+#forgot-password-modal .close:hover,
+#forgot-password-modal .close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Header */
+#forgot-password-modal h2 {
+    text-align: center;
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+/* Input fields */
+input[type="email"],
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+input[type="email"]:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+/* Send OTP button */
+#send-otp {
+    width: 100%;
+    padding: 12px;
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+#send-otp:hover {
+    background-color: #45a049;
+}
+
+/* Verify OTP button */
+#verify-otp {
+    width: 100%;
+    padding: 12px;
+    background-color: #2196F3;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+#verify-otp:hover {
+    background-color: #1976D2;
+}
+
+/* Form sections */
+.forgot-password-form,
+.verify-otp-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Alert message */
+.alert-message {
+    background-color: #f44336;
+    color: white;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.alert-message.success {
+    background-color: #4CAF50;
+}
+
+/* Forgot Password Modal Title */
+#forgot-password-form {
+    text-align: center;
+}
+
+#forgot-password-form h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+#forgot-password-form p {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    #forgot-password-modal .modal-content {
+        width: 90%;
+        margin-top: 30%;
+    }
+}
