@@ -354,32 +354,21 @@ document.getElementById('retrieveForm').addEventListener('submit', async (e) => 
 
         // Fetch the RSA keys (public/private) for the file based on OTP
         const keysPath = `otp-files/${file.name.replace('.encrypted', '')}.keys`;
-        console.log(`Attempting to fetch RSA keys from path: ${keysPath}`); // Log the path
-
         const { data: keysDataResponse, error: keysError } = await supabase.storage
             .from(BUCKET_NAME)
             .download(keysPath);
 
-        // Check if the keys file exists
         if (keysError) {
-            console.error(`Error fetching RSA keys: ${keysError.message || JSON.stringify(keysError)}`);
             document.getElementById('status').textContent = `Error fetching RSA keys: ${keysError.message || 'Unknown error'}`;
             return;
         }
 
-        // Check if keys data is received
         if (!keysDataResponse) {
-            console.error('No keys data returned.');
             document.getElementById('status').textContent = 'No keys data returned.';
             return;
         }
 
-        // Log the keys data response to see its contents
-        console.log('RSA Keys Response:', keysDataResponse);
-
         const keysData = await keysDataResponse.text();
-        console.log('Keys Data:', keysData); // Log keys data for debugging
-
         const { publicKey, privateKey } = JSON.parse(keysData);
 
         // Import the RSA keys from the stored strings
@@ -400,7 +389,33 @@ document.getElementById('retrieveForm').addEventListener('submit', async (e) => 
             `;
 
             // Clean up the URL after download
-            setTimeout(() => URL.revokeObjectURL(url), 60000); // Clean up after 1 minute
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+            // Schedule deletion of the file and keys after 2 minutes
+            setTimeout(async () => {
+                try {
+                    const filePath = `otp-files/${file.name}`;
+                    const keysPath = `otp-files/${file.name.replace('.encrypted', '')}.keys`;
+
+                    // Delete the encrypted file
+                    const { error: deleteFileError } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
+                    if (deleteFileError) {
+                        console.error(`Error deleting file: ${deleteFileError.message || JSON.stringify(deleteFileError)}`);
+                    } else {
+                        console.log(`File deleted successfully: ${filePath}`);
+                    }
+
+                    // Delete the keys file
+                    const { error: deleteKeysError } = await supabase.storage.from(BUCKET_NAME).remove([keysPath]);
+                    if (deleteKeysError) {
+                        console.error(`Error deleting keys: ${deleteKeysError.message || JSON.stringify(deleteKeysError)}`);
+                    } else {
+                        console.log(`Keys deleted successfully: ${keysPath}`);
+                    }
+                } catch (deleteError) {
+                    console.error('Error scheduling file deletion:', deleteError);
+                }
+            }, 120000); // 2 minutes in milliseconds
 
         } catch (decryptError) {
             document.getElementById('status').textContent = 'Failed to decrypt file. Please refresh the page and try again.';
