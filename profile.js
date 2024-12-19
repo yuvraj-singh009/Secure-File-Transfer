@@ -314,6 +314,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         console.error(error);
     }
 });
+
 // Retrieve Form Submission
 document.getElementById('retrieveForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -431,106 +432,7 @@ document.getElementById('retrieveForm').addEventListener('submit', async (e) => 
 
 
 
-// Saved Data Upload
-document.getElementById('saveform').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const savedFileInput = document.getElementById('savedFile');
-    const savedFile = savedFileInput.files[0];
-    const username = document.getElementById('username').textContent.trim(); // Get username from the div
 
-    if (!savedFile ) {
-        document.getElementById('status').textContent = 'Please select a file and ensure keys are generated.';
-        return;
-    }
-
-    const Otp = generateOTP();
-
-    try {
-        // Encrypt the file with RSA public key
-        const { encryptedBlob } = await EnhancedEncryption.encryptFile(savedFile, rsaKeyPair.publicKey);
-
-        // Upload encrypted file to Supabase (Saved Data bucket)
-        const savedFilePath = `${username}/${Otp}-${savedFile.name}.encrypted`;
-        const { data, error } = await supabase.storage
-            .from('saved')
-            .upload(savedFilePath, encryptedBlob, {
-                cacheControl: '3600',
-                upsert: false
-            });
-
-        if (error) throw error;
-
-        // Display success status with OTP
-        document.getElementById('status').textContent = `File uploaded successfully. Use OTP: ${Otp} to retrieve it.`;
-
-    } catch (error) {
-        document.getElementById('status').textContent = `Error uploading file: ${error.message}`;
-        console.error(error);
-    }
-});
-
-// Retrieve Saved Data
-document.getElementById('retrieveSavedForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const retrieveSavedOtpInput = document.getElementById('retrieveSavedOtp');
-    const Otp = retrieveSavedOtpInput.value;
-    const username = document.getElementById('username').textContent.trim(); // Get username from the div
-
-    if (!Otp) {
-        document.getElementById('status').textContent = 'Please enter an OTP and ensure keys are generated.';
-        return;
-    }
-
-    try {
-        // List all files in the bucket
-        const { data: files, error } = await supabase.storage.from('saved').list(username);
-
-        if (error) throw error;
-
-        // Find the file matching the OTP
-        const file = files.find((f) => f.name.startsWith(`${Otp}-`) && f.name.endsWith('.encrypted'));
-
-        if (!file) {
-            document.getElementById('status').textContent = `No file found for OTP: ${Otp}`;
-            return;
-        }
-
-         // Generate a download URL for the file in the username folder
-         const filePath = `${username}/${file.name}`;
-         const { data: downloadData, error: downloadError } = await supabase.storage
-             .from('saved')
-             .createSignedUrl(filePath, 60);
-        if (downloadError) throw downloadError;
-
-        // Fetch the file
-        const response = await fetch(downloadData.signedUrl);
-        const encryptedBlob = await response.blob();
-
-        try {
-            // Decrypt the file with the RSA private key
-            const decryptedBlob = await EnhancedEncryption.decryptFile(encryptedBlob, rsaKeyPair.privateKey);
-
-            // Create a download link for the decrypted file
-            const url = URL.createObjectURL(decryptedBlob);
-            document.getElementById('status').innerHTML = `
-                File retrieved and decrypted successfully.
-                <a href="${url}" target="_blank" download="${file.name.replace('.encrypted', '')}">Download Decrypted File</a>
-            `;
-
-            // Clean up the URL after download
-            setTimeout(() => URL.revokeObjectURL(url), 60000); // Clean up after 1 minute
-
-        } catch (decryptError) {
-            document.getElementById('status').textContent = 'Failed to decrypt file. Please refresh the page and try again.';
-            console.error('Decryption error:', decryptError);
-        }
-
-    } catch (error) {
-        document.getElementById('status').textContent = `Error retrieving file: ${error.message}`;
-        console.error(error);
-    }
-});
 
 // Username display logic
 document.addEventListener('DOMContentLoaded', () => {
