@@ -1,8 +1,8 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // Supabase Configuration
-const SUPABASE_URL = 'https://afieewyossvtxetxytnr.supabase.co';
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmaWVld3lvc3N2dHhldHh5dG5yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMjgxNTc4MCwiZXhwIjoyMDQ4MzkxNzgwfQ.agrmFADCTLm4n3w8tykxwIjz9K7MuknHk4GfOCTNWLM';
+const SUPABASE_URL = 'https://maqtxpshtvmhuiindqjs.supabase.co';
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hcXR4cHNodHZtaHVpaW5kcWpzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODgwMDM1MSwiZXhwIjoyMDc0Mzc2MzUxfQ.KybEDEJSNs70zvzOWudtw-vXQLZcYfZojyrJUh_InSc';
 const BUCKET_NAME = 'uploads';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -528,4 +528,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error("Failed to initialize RSA Key Pair", error);
         }
     }
+
 });
