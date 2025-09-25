@@ -3,8 +3,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs/+esm';
 
 // Initialize Supabase client
-const SUPABASE_URL = 'https://afieewyossvtxetxytnr.supabase.co'; // Replace with your Supabase URL
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmaWVld3lvc3N2dHhldHh5dG5yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMjgxNTc4MCwiZXhwIjoyMDQ4MzkxNzgwfQ.agrmFADCTLm4n3w8tykxwIjz9K7MuknHk4GfOCTNWLM'; // Replace with your Supabase anon key
+const SUPABASE_URL = 'https://maqtxpshtvmhuiindqjs.supabase.co'; // Replace with your Supabase URL
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hcXR4cHNodHZtaHVpaW5kcWpzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODgwMDM1MSwiZXhwIjoyMDc0Mzc2MzUxfQ.KybEDEJSNs70zvzOWudtw-vXQLZcYfZojyrJUh_InSc'; // Replace with your Supabase anon key
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
@@ -85,3 +85,4 @@ togglePassword.addEventListener('click', function (e) {
     // Toggle the eye slash icon
     this.classList.toggle('fa-eye-slash');
 });
+
