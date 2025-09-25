@@ -1,8 +1,8 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs/+esm';
 
-const supabaseUrl = 'https://afieewyossvtxetxytnr.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmaWVld3lvc3N2dHhldHh5dG5yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMjgxNTc4MCwiZXhwIjoyMDQ4MzkxNzgwfQ.agrmFADCTLm4n3w8tykxwIjz9K7MuknHk4GfOCTNWLM';
+const supabaseUrl = 'https://maqtxpshtvmhuiindqjs.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hcXR4cHNodHZtaHVpaW5kcWpzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODgwMDM1MSwiZXhwIjoyMDc0Mzc2MzUxfQ.KybEDEJSNs70zvzOWudtw-vXQLZcYfZojyrJUh_InSc';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 document.getElementById('login-form').addEventListener('submit', async (event) => {
@@ -234,4 +234,5 @@ verifyOtpButton.addEventListener("click", async () => {
         alert("An error occurred while verifying the OTP.");
     }
 });
+
 
